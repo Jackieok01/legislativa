@@ -129,6 +129,10 @@ MIGRATIONS = [
 ]
 
 
+SEED_ACCESOS = [
+    ('ocampojacqueline83@gmail.com', 'admin', None),
+]
+
 def init():
     db = get_db()
     db.executescript(SCHEMA)
@@ -137,6 +141,14 @@ def init():
             db.execute(sql)
         except Exception:
             pass  # column already exists
+    for email, rol, leg_id in SEED_ACCESOS:
+        try:
+            db.execute(
+                "INSERT OR IGNORE INTO email_roles (email, rol, legislador_id) VALUES (?,?,?)",
+                (email, rol, leg_id)
+            )
+        except Exception:
+            pass
     db.commit()
     print("Tables ready.")
 
