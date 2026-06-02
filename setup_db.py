@@ -20,8 +20,10 @@ def setup():
         CREATE TABLE IF NOT EXISTS usuarios (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             username    TEXT    NOT NULL UNIQUE,
-            password    TEXT    NOT NULL,
+            password    TEXT    NOT NULL DEFAULT '',
             nombre      TEXT    NOT NULL,
+            email       TEXT,
+            google_id   TEXT    UNIQUE,
             rol         TEXT    DEFAULT 'staff' CHECK(rol IN ('admin','presidente','staff')),
             activo      INTEGER DEFAULT 1,
             created_at  TEXT    DEFAULT (datetime('now'))

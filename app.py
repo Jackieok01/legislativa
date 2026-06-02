@@ -1,12 +1,23 @@
 import json
+import os
 import secrets
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
+from authlib.integrations.flask_client import OAuth
 from db import get_db
 
 app = Flask(__name__)
-app.secret_key = "legislativa-secret-2025"
+app.secret_key = os.environ.get('SECRET_KEY', 'legislativa-secret-2025')
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 # ─────────────────────────────────────────────
 # AUTH HELPERS
@@ -68,6 +79,54 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# ─────────────────────────────────────────────
+# GOOGLE OAUTH
+# ─────────────────────────────────────────────
+
+@app.route('/login/google')
+def login_google():
+    redirect_uri = url_for('auth_google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/login/google/callback')
+def auth_google_callback():
+    token     = google.authorize_access_token()
+    user_info = token.get('userinfo')
+    if not user_info:
+        flash('No se pudo obtener información de Google', 'danger')
+        return redirect(url_for('login'))
+
+    email     = user_info.get('email', '').lower().strip()
+    nombre    = user_info.get('name', email)
+    google_id = user_info.get('sub')
+
+    db   = get_db()
+    user = db.execute(
+        "SELECT * FROM usuarios WHERE google_id=? AND activo=1", (google_id,)
+    ).fetchone()
+
+    if not user:
+        user = db.execute(
+            "SELECT * FROM usuarios WHERE email=? AND activo=1", (email,)
+        ).fetchone()
+        if user:
+            db.execute("UPDATE usuarios SET google_id=? WHERE id=?", (google_id, user['id']))
+            db.commit()
+
+    if not user:
+        # Auto-register as staff
+        db.execute(
+            "INSERT INTO usuarios (username, password, nombre, email, rol, google_id) VALUES (?,?,?,?,?,?)",
+            (email, '', nombre, email, 'staff', google_id)
+        )
+        db.commit()
+        user = db.execute("SELECT * FROM usuarios WHERE google_id=?", (google_id,)).fetchone()
+
+    session['user_id']     = user['id']
+    session['user_nombre'] = user['nombre']
+    session['user_rol']    = user['rol']
+    return redirect(url_for('index'))
 
 # ─────────────────────────────────────────────
 # RECUPERAR CONTRASEÑA

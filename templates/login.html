@@ -8,6 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { background: #1a1d23; min-height: 100vh; display:flex; align-items:center; }
+        .btn-google {
+            background: #fff; border: 1px solid #dadce0; color: #3c4043;
+            font-weight: 500; transition: box-shadow .2s;
+        }
+        .btn-google:hover { box-shadow: 0 1px 6px rgba(0,0,0,.2); background:#f8f9fa; }
+        .btn-google img { width:18px; margin-right:8px; }
+        .divider { display:flex; align-items:center; gap:10px; color:#6c757d; font-size:.85rem; }
+        .divider::before, .divider::after { content:''; flex:1; height:1px; background:#dee2e6; }
     </style>
 </head>
 <body>
@@ -28,13 +36,20 @@
                 {% endfor %}{% endif %}
             {% endwith %}
 
+            <a href="/login/google" class="btn btn-google w-100 d-flex align-items-center justify-content-center mb-3">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+                Continuar con Google
+            </a>
+
+            <div class="divider mb-3">o ingresá con usuario</div>
+
             <form method="POST" autocomplete="on">
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Usuario</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                         <input name="username" class="form-control" placeholder="usuario"
-                               autocomplete="username" required autofocus>
+                               autocomplete="username" autofocus>
                     </div>
                 </div>
                 <div class="mb-4">
@@ -42,7 +57,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
                         <input name="password" type="password" class="form-control"
-                               placeholder="••••••••" autocomplete="current-password" required>
+                               placeholder="••••••••" autocomplete="current-password">
                     </div>
                 </div>
                 <button class="btn btn-primary w-100 fw-semibold">
