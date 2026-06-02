@@ -9,6 +9,9 @@ from db import get_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'legislativa-secret-2025')
+app.config['SESSION_COOKIE_SECURE']   = os.environ.get('DATABASE_URL') is not None
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 oauth = OAuth(app)
 google = oauth.register(
