@@ -69,11 +69,16 @@ if DATABASE_URL:
             return cur.execute(sql, params)
 
         def executescript(self, sql):
+            self._pg.autocommit = True
             cur = self._pg.cursor()
             for stmt in sql.split(';'):
                 s = _translate(stmt.strip())
                 if s:
-                    cur.execute(s)
+                    try:
+                        cur.execute(s)
+                    except Exception as e:
+                        print(f"[executescript] {e}")
+            self._pg.autocommit = False
 
         def commit(self):
             self._pg.commit()
