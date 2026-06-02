@@ -3,15 +3,25 @@ import os
 import secrets
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from authlib.integrations.flask_client import OAuth
 from db import get_db
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get('SECRET_KEY', 'legislativa-secret-2025')
 app.config['SESSION_COOKIE_SECURE']   = os.environ.get('DATABASE_URL') is not None
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+# Ensure tables exist on every startup (safe to re-run)
+with app.app_context():
+    try:
+        from init_db import init
+        init()
+    except Exception as e:
+        print(f"init_db warning: {e}")
 
 oauth = OAuth(app)
 google = oauth.register(
