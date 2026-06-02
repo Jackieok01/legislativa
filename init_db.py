@@ -139,17 +139,21 @@ def init():
     for sql in MIGRATIONS:
         try:
             db.execute(sql)
+            db.commit()
         except Exception:
-            pass  # column already exists
+            try: db.rollback()
+            except Exception: pass
+
     for email, rol, leg_id in SEED_ACCESOS:
         try:
             db.execute(
                 "INSERT OR IGNORE INTO email_roles (email, rol, legislador_id) VALUES (?,?,?)",
                 (email, rol, leg_id)
             )
+            db.commit()
         except Exception:
-            pass
-    db.commit()
+            try: db.rollback()
+            except Exception: pass
     print("Tables ready.")
 
 

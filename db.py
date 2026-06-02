@@ -83,6 +83,9 @@ if DATABASE_URL:
         def commit(self):
             self._pg.commit()
 
+        def rollback(self):
+            self._pg.rollback()
+
         def close(self):
             self._pg.close()
 
