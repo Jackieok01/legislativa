@@ -113,9 +113,20 @@ SCHEMA = """
 """
 
 
+MIGRATIONS = [
+    "ALTER TABLE usuarios ADD COLUMN email TEXT",
+    "ALTER TABLE usuarios ADD COLUMN google_id TEXT",
+]
+
+
 def init():
     db = get_db()
     db.executescript(SCHEMA)
+    for sql in MIGRATIONS:
+        try:
+            db.execute(sql)
+        except Exception:
+            pass  # column already exists
     db.commit()
     print("Tables ready.")
 
