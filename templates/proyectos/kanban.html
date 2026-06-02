@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Proyectos — Kanban{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Proyectos</h4>
+    <div class="d-flex gap-2">
+        <a href="/proyectos" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>Lista
+        </a>
+        <a href="/proyectos/nuevo" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo
+        </a>
+    </div>
+</div>
+
+<p class="text-muted small mb-3">
+    <i class="bi bi-arrows-move me-1"></i>Arrastrá las tarjetas entre columnas para cambiar el estado
+</p>
+
+<!-- Kanban board — scroll horizontal -->
+<div class="d-flex gap-3 pb-4" style="overflow-x:auto; align-items:flex-start; min-height:70vh">
+
+    {% for col in columns %}
+    <div style="min-width:220px; max-width:220px; flex-shrink:0">
+
+        <!-- Column header -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <span class="fw-bold small text-uppercase" style="color:{{ col.color }}; letter-spacing:.5px">
+                {{ col.nombre }}
+            </span>
+            <span class="badge rounded-pill" style="background:{{ col.color }}25; color:{{ col.color }}; border:1px solid {{ col.color }}40">
+                {{ col.count }}
+            </span>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="kanban-col rounded-3 p-2"
+             style="background:#f0f2f5; min-height:150px; border-top:3px solid {{ col.color }}"
+             data-estado="{{ col.estado }}">
+
+            {% for p in proyectos if p.estado == col.estado %}
+            <div class="card kanban-card mb-2 border-0 shadow-sm" data-id="{{ p.id }}"
+                 style="cursor:grab; border-left:3px solid
+                 {% if p.prioridad == 'Alta' %}#dc3545{% elif p.prioridad == 'Media' %}#ffc107{% else %}#dee2e6{% endif %} !important">
+                <div class="card-body p-2">
+                    <div class="d-flex gap-1 mb-1 flex-wrap">
+                        {% if p.prioridad == 'Alta' %}
+                        <span class="badge bg-danger" style="font-size:.65rem">Alta</span>
+                        {% elif p.prioridad == 'Media' %}
+                        <span class="badge bg-warning text-dark" style="font-size:.65rem">Media</span>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1 fw-semibold" style="font-size:.82rem; line-height:1.3">
+                        {{ p.titulo }}
+                    </p>
+                    {% if p.numero_expediente %}
+                    <p class="mb-1 text-muted" style="font-size:.72rem">
+                        <i class="bi bi-hash"></i>{{ p.numero_expediente }}
+                    </p>
+                    {% endif %}
+                    {% if p.comision_nombre %}
+                    <p class="mb-0 text-muted" style="font-size:.72rem">
+                        <i class="bi bi-diagram-3 me-1"></i>{{ p.comision_nombre }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- Toast de confirmación -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="toastOk" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-check2 me-2"></i>Estado actualizado</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="toastErr" class="toast align-items-center text-bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-x-circle me-2"></i>Error al guardar</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+const toastOk  = new bootstrap.Toast(document.getElementById('toastOk'),  { delay: 1800 });
+const toastErr = new bootstrap.Toast(document.getElementById('toastErr'), { delay: 2500 });
+
+document.querySelectorAll('.kanban-col').forEach(col => {
+    new Sortable(col, {
+        group:      'kanban',
+        animation:  150,
+        ghostClass: 'opacity-50',
+        onEnd: function(evt) {
+            const id       = evt.item.dataset.id;
+            const newState = evt.to.dataset.estado;
+
+            fetch('/api/proyectos/' + id + '/estado', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ estado: newState })
+            })
+            .then(r => r.json())
+            .then(d => { if (d.ok) toastOk.show(); else toastErr.show(); })
+            .catch(() => toastErr.show());
+        }
+    });
+});
+</script>
+{% endblock %}

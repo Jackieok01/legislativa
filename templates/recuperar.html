@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recuperar contraseña</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>body { background: #1a1d23; min-height:100vh; display:flex; align-items:center; }</style>
+</head>
+<body>
+<div class="container" style="max-width:420px">
+
+    <div class="text-center mb-4">
+        <i class="bi bi-building-fill-check text-warning fs-1"></i>
+        <h4 class="text-white mt-2 mb-0">Gestión Legislativa</h4>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-body p-4">
+
+            {% if found %}
+            <!-- Usuario encontrado — instrucciones -->
+            <div class="text-center">
+                <i class="bi bi-person-check-fill text-success" style="font-size:3rem"></i>
+                <h5 class="mt-3">Usuario encontrado</h5>
+                <p class="text-muted">Cuenta de <strong>{{ nombre }}</strong></p>
+            </div>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Próximo paso:</strong> Contactá al administrador del sistema para que resetee tu contraseña.
+            </div>
+            <div class="bg-light rounded p-3 small text-muted">
+                <i class="bi bi-shield-lock me-1"></i>
+                Por seguridad, los resets de contraseña se hacen a través del administrador del sistema
+                desde el panel <strong>Admin → Usuarios</strong>.
+            </div>
+            <a href="/login" class="btn btn-outline-secondary w-100 mt-3">
+                <i class="bi bi-arrow-left me-1"></i>Volver al login
+            </a>
+
+            {% elif not_found %}
+            <!-- Usuario no encontrado -->
+            <div class="text-center mb-3">
+                <i class="bi bi-person-x-fill text-danger" style="font-size:2.5rem"></i>
+                <h5 class="mt-2">Usuario no encontrado</h5>
+            </div>
+            <div class="alert alert-danger py-2 small">
+                No existe un usuario activo con ese nombre de usuario.
+            </div>
+            <a href="/recuperar" class="btn btn-outline-secondary w-100 mb-2">Intentar de nuevo</a>
+            <a href="/login" class="btn btn-link w-100 text-muted">Volver al login</a>
+
+            {% else %}
+            <!-- Formulario inicial -->
+            <div class="text-center mb-4">
+                <i class="bi bi-key-fill text-warning" style="font-size:2.5rem"></i>
+                <h5 class="mt-2 mb-1">¿Olvidaste tu contraseña?</h5>
+                <p class="text-muted small">Ingresá tu usuario para ver las opciones de recuperación</p>
+            </div>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nombre de usuario</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input name="username" class="form-control" placeholder="tu_usuario" required autofocus>
+                    </div>
+                </div>
+                <button class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>Buscar cuenta
+                </button>
+            </form>
+            <hr class="my-3">
+            <a href="/login" class="btn btn-link w-100 text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Volver al login
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

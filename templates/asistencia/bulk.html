@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Asistencia — {{ evento.titulo }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-2">
+    <a href="/eventos" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <div>
+        <h4 class="mb-0">{{ evento.titulo }}</h4>
+        <span class="text-muted small">{{ evento.fecha[:16].replace('T',' ') }} — {{ evento.tipo }}</span>
+    </div>
+</div>
+
+{% if confirm_url %}
+<div class="alert alert-info d-flex align-items-center gap-3 mt-3">
+    <i class="bi bi-link-45deg fs-4 flex-shrink-0"></i>
+    <div class="flex-grow-1">
+        <strong class="d-block">Link de confirmación para legisladores</strong>
+        <small class="text-muted">Compartí este link para que cada legislador confirme su presencia desde el celular</small>
+        <div class="mt-1"><code class="small">{{ confirm_url }}</code></div>
+    </div>
+    <button class="btn btn-outline-primary btn-sm flex-shrink-0" onclick="copiarLink()">
+        <i class="bi bi-clipboard me-1"></i>Copiar
+    </button>
+</div>
+{% endif %}
+
+<form method="POST" class="mt-3">
+    <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+        <button type="button" class="btn btn-success btn-sm" onclick="setAll('Presente')">
+            <i class="bi bi-check-all me-1"></i>Todos presentes
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="setAll('Ausente')">
+            <i class="bi bi-x-lg me-1"></i>Todos ausentes
+        </button>
+        <span class="text-muted small ms-2" id="contador"></span>
+    </div>
+
+    <div class="card">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr><th style="width:35%">Legislador</th><th style="width:22%">Estado</th><th>Observación</th></tr>
+        </thead>
+        <tbody>
+        {% for l in legisladores %}
+        <tr>
+            <td class="fw-semibold align-middle">{{ l.apellido }}, {{ l.nombre }}</td>
+            <td class="align-middle">
+                <select name="estado_{{ l.id }}" class="form-select form-select-sm estado-select"
+                        onchange="actualizarContador()">
+                    {% for opt in ['Presente','Ausente','Justificado','En Mision','Llego Tarde'] %}
+                    <option value="{{ opt }}" {{ 'selected' if l.estado_actual == opt }}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td class="align-middle">
+                <input name="obs_{{ l.id }}" class="form-control form-control-sm"
+                       value="{{ l.observacion or '' }}" placeholder="opcional">
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary btn-lg">
+            <i class="bi bi-save me-1"></i>Guardar asistencia
+        </button>
+        <a href="/eventos" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+    </div>
+</form>
+
+<script>
+function setAll(estado) {
+    document.querySelectorAll('.estado-select').forEach(s => s.value = estado);
+    actualizarContador();
+}
+
+function actualizarContador() {
+    const selects = document.querySelectorAll('.estado-select');
+    let presentes = 0;
+    selects.forEach(s => { if (s.value === 'Presente') presentes++; });
+    document.getElementById('contador').textContent =
+        presentes + ' presentes de ' + selects.length;
+}
+
+function copiarLink() {
+    navigator.clipboard.writeText('{{ confirm_url }}').then(() => {
+        const btn = document.querySelector('[onclick="copiarLink()"]');
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>¡Copiado!';
+        btn.classList.replace('btn-outline-primary', 'btn-success');
+        setTimeout(() => {
+            btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copiar';
+            btn.classList.replace('btn-success', 'btn-outline-primary');
+        }, 2000);
+    });
+}
+
+actualizarContador();
+</script>
+{% endblock %}

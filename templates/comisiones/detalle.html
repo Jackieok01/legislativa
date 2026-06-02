@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ com.nombre }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/comisiones" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">{{ com.nombre }}</h4>
+    <span class="badge bg-secondary">{{ com.tipo }}</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">Miembros ({{ miembros|length }})</h6></div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Legislador</th><th>Rol</th><th></th></tr></thead>
+                <tbody>
+                {% for m in miembros %}
+                <tr>
+                    <td><a href="/legisladores/{{ m.id }}" class="text-decoration-none">{{ m.apellido }}, {{ m.nombre }}</a></td>
+                    <td><span class="badge bg-{{ 'primary' if m.rol == 'Presidente' else 'secondary' }}">{{ m.rol }}</span></td>
+                    <td>
+                        <form method="POST" action="/comisiones/{{ com.id }}/quitar_miembro/{{ m.id }}" class="d-inline"
+                              onsubmit="return confirm('¿Quitar a {{ m.nombre }} de la comisión?')">
+                            <button class="btn btn-sm btn-outline-danger">Quitar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-3">Sin miembros asignados</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card p-3">
+            <h6 class="text-muted mb-3">Agregar miembro</h6>
+            {% if disponibles %}
+            <form method="POST" action="/comisiones/{{ com.id }}/agregar_miembro">
+                <div class="mb-2">
+                    <select name="legislador_id" class="form-select form-select-sm" required>
+                        <option value="">Seleccionar legislador</option>
+                        {% for l in disponibles %}
+                        <option value="{{ l.id }}">{{ l.apellido }}, {{ l.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <select name="rol" class="form-select form-select-sm">
+                        {% for r in ['Vocal','Presidente','Vicepresidente','Suplente'] %}
+                        <option>{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn btn-sm btn-primary w-100">Agregar</button>
+            </form>
+            {% else %}
+            <p class="text-muted small">Todos los legisladores activos ya son miembros.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

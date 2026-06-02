@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ leg.apellido }}, {{ leg.nombre }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/legisladores" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">{{ leg.apellido }}, {{ leg.nombre }}</h4>
+    <span class="badge bg-{{ 'success' if leg.activo else 'danger' }}">{{ 'Activo' if leg.activo else 'Inactivo' }}</span>
+    <a href="/legisladores/{{ leg.id }}/editar" class="btn btn-sm btn-outline-secondary ms-auto">Editar</a>
+</div>
+
+<div class="row g-4">
+    <!-- Info + Stats -->
+    <div class="col-md-4">
+        <div class="card p-3 mb-3">
+            <h6 class="text-muted mb-3">Información</h6>
+            <p class="mb-1"><i class="bi bi-diagram-3 me-2 text-muted"></i>{{ leg.sector or '—' }}</p>
+            <p class="mb-1"><i class="bi bi-envelope me-2 text-muted"></i>{{ leg.email or '—' }}</p>
+            <p class="mb-1"><i class="bi bi-telephone me-2 text-muted"></i>{{ leg.telefono or '—' }}</p>
+            {% if leg.notas %}<p class="mt-2 text-muted small">{{ leg.notas }}</p>{% endif %}
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="text-muted mb-3">Asistencia general</h6>
+            {% if stats.total > 0 %}
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small">Presencias</span><span class="fw-bold text-success">{{ stats.presentes }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small">Ausencias</span><span class="fw-bold text-danger">{{ stats.ausentes }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="small">Justificados</span><span class="fw-bold text-warning">{{ stats.justificados }}</span>
+            </div>
+            <div class="progress" style="height:8px">
+                <div class="progress-bar bg-success" style="width:{{ (stats.presentes / stats.total * 100)|round|int }}%"></div>
+            </div>
+            <p class="text-end small text-muted mt-1">{{ (stats.presentes / stats.total * 100)|round(1) }}% asistencia</p>
+            {% else %}
+            <p class="text-muted small">Sin datos de asistencia</p>
+            {% endif %}
+        </div>
+
+        <div class="card p-3">
+            <h6 class="text-muted mb-3">Comisiones</h6>
+            {% for c in comisiones %}
+            <div class="d-flex justify-content-between small mb-1">
+                <span>{{ c.nombre }}</span>
+                <span class="badge bg-secondary">{{ c.rol }}</span>
+            </div>
+            {% else %}
+            <p class="text-muted small">Sin comisiones asignadas</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Historial asistencia -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">Historial de asistencia (últimos 20)</h6></div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Fecha</th><th>Evento</th><th>Tipo</th><th>Estado</th></tr></thead>
+                <tbody>
+                {% for a in asistencias %}
+                <tr>
+                    <td class="text-muted small">{{ a.fecha[:10] }}</td>
+                    <td>{{ a.titulo }}</td>
+                    <td><span class="badge bg-secondary small">{{ a.tipo }}</span></td>
+                    <td>
+                        {% if a.estado == 'Presente' %}<span class="badge bg-success">Presente</span>
+                        {% elif a.estado == 'Ausente' %}<span class="badge bg-danger">Ausente</span>
+                        {% elif a.estado == 'Justificado' %}<span class="badge bg-warning text-dark">Justificado</span>
+                        {% else %}<span class="badge bg-secondary">{{ a.estado }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Sin registros de asistencia</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

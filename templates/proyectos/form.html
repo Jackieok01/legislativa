@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Proyecto{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/proyectos" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">Nuevo Proyecto</h4>
+</div>
+<div class="card p-4" style="max-width:600px">
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Título <span class="text-danger">*</span></label>
+        <input name="titulo" class="form-control" required>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <label class="form-label">N° Expediente</label>
+            <input name="numero_expediente" class="form-control" placeholder="Ej: 1234-D-2025">
+        </div>
+        <div class="col-6">
+            <label class="form-label">Fecha de ingreso</label>
+            <input name="fecha_ingreso" type="date" class="form-control">
+        </div>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <label class="form-label">Comisión</label>
+            <select name="comision_id" class="form-select">
+                <option value="">— Sin asignar —</option>
+                {% for c in comisiones %}
+                <option value="{{ c.id }}">{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-3">
+            <label class="form-label">Estado</label>
+            <select name="estado" class="form-select">
+                {% for s in ['Borrador','En Comision','Con Dictamen','En Plenario','Aprobado','Rechazado','Archivado'] %}
+                <option>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-3">
+            <label class="form-label">Prioridad</label>
+            <select name="prioridad" class="form-select">
+                {% for p in ['Alta','Media','Baja'] %}
+                <option>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Autores</label>
+        <select name="autores" class="form-select" multiple size="5">
+            {% for l in legisladores %}
+            <option value="{{ l.id }}">{{ l.apellido }}, {{ l.nombre }}</option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Ctrl+click para seleccionar múltiples</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Descripción</label>
+        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary">Crear</button>
+        <a href="/proyectos" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+</div>
+{% endblock %}

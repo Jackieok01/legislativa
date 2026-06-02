@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Proyectos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Proyectos</h4>
+    <div class="d-flex gap-2">
+        <a href="/proyectos/kanban" class="btn btn-outline-secondary">
+            <i class="bi bi-kanban me-1"></i>Kanban
+        </a>
+        <a href="/proyectos/nuevo" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo
+        </a>
+    </div>
+</div>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr><th>Expediente</th><th>Título</th><th>Comisión</th><th>Estado</th><th>Prioridad</th><th>Ingreso</th><th></th></tr></thead>
+    <tbody>
+    {% for p in proyectos %}
+    <tr>
+        <td class="text-muted small align-middle">{{ p.numero_expediente or '—' }}</td>
+        <td class="align-middle fw-semibold">{{ p.titulo }}</td>
+        <td class="align-middle text-muted small">{{ p.comision_nombre or '—' }}</td>
+        <td class="align-middle">
+            {% set color = {'Borrador':'secondary','En Comision':'info','Con Dictamen':'primary','En Plenario':'warning','Aprobado':'success','Rechazado':'danger','Archivado':'secondary'} %}
+            <form method="POST" action="/proyectos/{{ p.id }}/estado" class="d-inline">
+                <select name="estado" class="form-select form-select-sm border-0 p-0 bg-transparent"
+                        onchange="this.form.submit()" style="min-width:130px">
+                    {% for s in ['Borrador','En Comision','Con Dictamen','En Plenario','Aprobado','Rechazado','Archivado'] %}
+                    <option value="{{ s }}" {{ 'selected' if p.estado == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </td>
+        <td class="align-middle">
+            {% if p.prioridad == 'Alta' %}<span class="badge bg-danger">Alta</span>
+            {% elif p.prioridad == 'Media' %}<span class="badge bg-warning text-dark">Media</span>
+            {% else %}<span class="badge bg-secondary">Baja</span>{% endif %}
+        </td>
+        <td class="text-muted small align-middle">{{ p.fecha_ingreso or '—' }}</td>
+        <td class="align-middle"></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="text-center text-muted py-4">No hay proyectos. <a href="/proyectos/nuevo">Crear uno</a>.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

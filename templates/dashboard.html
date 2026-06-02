@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Dashboard del Bloque{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h4 class="mb-0">Dashboard del Bloque</h4>
+        <p class="text-muted mb-0">Bienvenido/a, <strong>{{ current_user.nombre }}</strong></p>
+    </div>
+    <a href="/reportes/asistencia" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download me-1"></i>Reporte completo
+    </a>
+</div>
+
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card blue p-3">
+            <div class="text-muted small"><i class="bi bi-people me-1"></i>Legisladores activos</div>
+            <div class="fs-2 fw-bold text-primary">{{ total_legs }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card green p-3">
+            <div class="text-muted small"><i class="bi bi-check2-circle me-1"></i>Asistencia promedio</div>
+            <div class="fs-2 fw-bold text-success">{{ pct_global }}%</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card orange p-3">
+            <div class="text-muted small"><i class="bi bi-file-earmark-text me-1"></i>Proyectos activos</div>
+            <div class="fs-2 fw-bold" style="color:#fd7e14">{{ total_proy }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card purple p-3">
+            <div class="text-muted small"><i class="bi bi-calendar-event me-1"></i>Eventos este mes</div>
+            <div class="fs-2 fw-bold" style="color:#6f42c1">{{ eventos_mes }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card p-3 h-100">
+            <h6 class="text-muted mb-3">
+                <i class="bi bi-bar-chart-horizontal me-1"></i>Asistencia por legislador
+                <span class="ms-2 small">
+                    <span class="text-success">■</span> ≥80%
+                    <span class="text-warning ms-1">■</span> 50-79%
+                    <span class="text-danger ms-1">■</span> &lt;50%
+                </span>
+            </h6>
+            <div style="position:relative; height:380px">
+                <canvas id="chartAsistencia"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-3 h-100">
+            <h6 class="text-muted mb-3"><i class="bi bi-pie-chart me-1"></i>Proyectos por estado</h6>
+            <canvas id="chartProyectos"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle text-danger me-1"></i>Mayor ausentismo</h6>
+            </div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Legislador</th><th>Sector</th><th class="text-center">Ausencias</th><th>% Asistencia</th></tr></thead>
+                <tbody>
+                {% for r in mas_ausentes %}
+                <tr>
+                    <td class="align-middle">
+                        <a href="/legisladores/{{ r.id }}" class="text-decoration-none fw-semibold">{{ r.nombre }}</a>
+                    </td>
+                    <td class="align-middle"><span class="badge bg-secondary small">{{ r.sector or '—' }}</span></td>
+                    <td class="text-center align-middle text-danger fw-bold">{{ r.ausencias }}</td>
+                    <td class="align-middle" style="min-width:110px">
+                        <div class="d-flex align-items-center gap-1">
+                            <div class="progress flex-grow-1" style="height:6px">
+                                <div class="progress-bar bg-{{ 'success' if r.pct >= 80 else 'warning' if r.pct >= 50 else 'danger' }}"
+                                     style="width:{{ r.pct }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ r.pct }}%</small>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-calendar-check me-1"></i>Próximos eventos</h6>
+                <a href="/eventos/nuevo" class="btn btn-sm btn-outline-primary">+ Nuevo</a>
+            </div>
+            {% if proximos %}
+            <ul class="list-group list-group-flush">
+                {% for e in proximos %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                    <div>
+                        <div class="fw-semibold small">{{ e.titulo }}</div>
+                        <div class="text-muted" style="font-size:.8rem">
+                            <i class="bi bi-clock me-1"></i>{{ e.fecha[:16].replace('T',' ') }}
+                        </div>
+                    </div>
+                    <span class="badge bg-secondary small">{{ e.tipo }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="p-3 text-muted small text-center">
+                No hay eventos programados. <a href="/eventos/nuevo">Crear uno</a>.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Alta prioridad -->
+{% if proy_alta %}
+<div class="card">
+    <div class="card-header bg-white">
+        <h6 class="mb-0">
+            <span class="text-danger me-1">●</span>Proyectos de alta prioridad activos
+        </h6>
+    </div>
+    <table class="table table-sm mb-0">
+        <thead><tr><th>Expediente</th><th>Título</th><th>Comisión</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for p in proy_alta %}
+        {% set colors = {'Borrador':'secondary','En Comision':'info','Con Dictamen':'primary','En Plenario':'warning'} %}
+        <tr>
+            <td class="text-muted small align-middle">{{ p.numero_expediente or '—' }}</td>
+            <td class="fw-semibold align-middle">{{ p.titulo }}</td>
+            <td class="text-muted small align-middle">{{ p.comision_nombre or '—' }}</td>
+            <td class="align-middle">
+                <span class="badge bg-{{ colors.get(p.estado, 'secondary') }}">{{ p.estado }}</span>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const asistenciaLabels = {{ asistencia_labels | safe }};
+const asistenciaValues = {{ asistencia_values | safe }};
+const barColors = asistenciaValues.map(v =>
+    v >= 80 ? '#198754' : v >= 50 ? '#fd7e14' : '#dc3545'
+);
+
+new Chart(document.getElementById('chartAsistencia'), {
+    type: 'bar',
+    data: {
+        labels: asistenciaLabels,
+        datasets: [{
+            label: '% Asistencia',
+            data: asistenciaValues,
+            backgroundColor: barColors,
+            borderRadius: 3,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f0f0f0' } },
+            y: { ticks: { font: { size: 11 } } }
+        }
+    }
+});
+
+const statusColors = {
+    'Borrador':'#6c757d', 'En Comision':'#0dcaf0', 'Con Dictamen':'#0d6efd',
+    'En Plenario':'#ffc107', 'Aprobado':'#198754', 'Rechazado':'#dc3545', 'Archivado':'#adb5bd'
+};
+const proyectosLabels = {{ proyectos_labels | safe }};
+const proyectosValues = {{ proyectos_values | safe }};
+
+new Chart(document.getElementById('chartProyectos'), {
+    type: 'doughnut',
+    data: {
+        labels: proyectosLabels,
+        datasets: [{
+            data: proyectosValues,
+            backgroundColor: proyectosLabels.map(l => statusColors[l] || '#999'),
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Inicio — Gestión Legislativa{% endblock %}
+{% block content %}
+<h4 class="mb-4 text-secondary">Panel de inicio</h4>
+
+<div class="row g-3 mb-5">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card blue p-3">
+            <div class="text-muted small">Legisladores activos</div>
+            <div class="fs-2 fw-bold text-primary">{{ stats.legisladores }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card green p-3">
+            <div class="text-muted small">Eventos registrados</div>
+            <div class="fs-2 fw-bold text-success">{{ stats.eventos }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card orange p-3">
+            <div class="text-muted small">Proyectos</div>
+            <div class="fs-2 fw-bold" style="color:#fd7e14">{{ stats.proyectos }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card purple p-3">
+            <div class="text-muted small">Comisiones activas</div>
+            <div class="fs-2 fw-bold text-purple" style="color:#6f42c1">{{ stats.comisiones }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Últimos eventos</h5>
+    <a href="/eventos/nuevo" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nuevo evento</a>
+</div>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr><th>Fecha</th><th>Título</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+    {% for e in eventos %}
+    <tr>
+        <td class="text-muted small">{{ e.fecha[:10] }}</td>
+        <td>{{ e.titulo }}</td>
+        <td><span class="badge bg-secondary">{{ e.tipo }}</span></td>
+        <td>
+            {% if e.estado == 'Realizado' %}<span class="badge bg-success">Realizado</span>
+            {% elif e.estado == 'Programado' %}<span class="badge bg-warning text-dark">Programado</span>
+            {% else %}<span class="badge bg-secondary">Cancelado</span>{% endif %}
+        </td>
+        <td>
+            {% if e.estado == 'Realizado' and not e.asistencia_cargada %}
+            <a href="/eventos/{{ e.id }}/asistencia" class="btn btn-sm btn-outline-primary">Cargar asistencia</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="text-center text-muted py-4">No hay eventos. <a href="/eventos/nuevo">Crear uno</a>.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

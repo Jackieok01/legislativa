@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Administración — Usuarios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Administración de usuarios</h4>
+</div>
+
+<!-- Tabla de usuarios -->
+<div class="card mb-4">
+    <div class="card-header bg-white"><h6 class="mb-0">Usuarios del sistema</h6></div>
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Nueva contraseña</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+        <tr class="{{ 'table-secondary' if not u.activo }}">
+            <td class="align-middle fw-semibold">{{ u.username }}</td>
+            <td class="align-middle">{{ u.nombre }}</td>
+            <td class="align-middle">
+                {% if u.rol == 'admin' %}
+                    <span class="badge bg-danger">admin</span>
+                {% elif u.rol == 'presidente' %}
+                    <span class="badge bg-warning text-dark">presidente</span>
+                {% else %}
+                    <span class="badge bg-secondary">staff</span>
+                {% endif %}
+            </td>
+            <td class="align-middle">
+                {% if u.activo %}
+                    <span class="badge bg-success">Activo</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inactivo</span>
+                {% endif %}
+            </td>
+            <td class="align-middle" style="min-width:220px">
+                <form method="POST" action="/admin/usuarios/{{ u.id }}/reset" class="d-flex gap-2">
+                    <input name="nueva_password" class="form-control form-control-sm"
+                           placeholder="Nueva contraseña" minlength="6" required>
+                    <button class="btn btn-sm btn-outline-warning flex-shrink-0">Reset</button>
+                </form>
+            </td>
+            <td class="align-middle">
+                <form method="POST" action="/admin/usuarios/{{ u.id }}/toggle"
+                      onsubmit="return confirm('{{ '¿Desactivar' if u.activo else '¿Activar' }} a {{ u.username }}?')">
+                    <button class="btn btn-sm {{ 'btn-outline-danger' if u.activo else 'btn-outline-success' }}">
+                        {{ 'Desactivar' if u.activo else 'Activar' }}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Nuevo usuario -->
+<div class="card" style="max-width:540px">
+    <div class="card-header bg-white"><h6 class="mb-0">Crear nuevo usuario</h6></div>
+    <div class="card-body">
+        <form method="POST" action="/admin/usuarios/nuevo">
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label">Usuario <span class="text-danger">*</span></label>
+                    <input name="username" class="form-control" placeholder="nombre_usuario" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                    <input name="nombre" class="form-control" placeholder="Juan García" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                    <input name="password" type="password" class="form-control" minlength="6" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Rol</label>
+                    <select name="rol" class="form-select">
+                        <option value="staff">staff</option>
+                        <option value="presidente">presidente</option>
+                        <option value="admin">admin</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-person-plus me-1"></i>Crear usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

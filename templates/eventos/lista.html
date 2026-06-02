@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Eventos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Eventos</h4>
+    <a href="/eventos/nuevo" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nuevo</a>
+</div>
+
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead>
+        <tr>
+            <th>Fecha</th><th>Título</th><th>Tipo</th><th>Comisión</th>
+            <th>Estado</th><th>Asistencia</th><th>Link</th><th>Confirmar</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in eventos %}
+    <tr>
+        <td class="text-muted small align-middle">{{ e.fecha[:10] }}</td>
+        <td class="align-middle fw-semibold">{{ e.titulo }}</td>
+        <td class="align-middle"><span class="badge bg-secondary">{{ e.tipo }}</span></td>
+        <td class="align-middle text-muted small">{{ e.comision_nombre or '—' }}</td>
+        <td class="align-middle">
+            {% if e.estado == 'Realizado' %}<span class="badge bg-success">Realizado</span>
+            {% elif e.estado == 'Programado' %}<span class="badge bg-warning text-dark">Programado</span>
+            {% else %}<span class="badge bg-secondary">Cancelado</span>{% endif %}
+        </td>
+        <td class="align-middle">
+            {% if e.asistencia_cargada %}
+            <a href="/eventos/{{ e.id }}/asistencia" class="btn btn-sm btn-success">
+                <i class="bi bi-check2 me-1"></i>Ver/Editar
+            </a>
+            {% elif e.estado == 'Realizado' %}
+            <a href="/eventos/{{ e.id }}/asistencia" class="btn btn-sm btn-outline-primary">Cargar</a>
+            {% elif e.estado == 'Programado' %}
+            <a href="/eventos/{{ e.id }}/asistencia" class="btn btn-sm btn-outline-secondary">Pre-cargar</a>
+            {% else %}<span class="text-muted small">—</span>{% endif %}
+        </td>
+        <td class="align-middle">
+            {% if e.token and e.estado != 'Cancelado' %}
+            <button class="btn btn-sm btn-outline-info" title="Copiar link de confirmación"
+                    onclick="copiarLink('{{ e.token }}', this)">
+                <i class="bi bi-link-45deg"></i>
+            </button>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+        </td>
+        <td class="align-middle">
+            {% if e.estado != 'Cancelado' %}
+            <button class="btn btn-sm btn-outline-success fw-semibold"
+                    onclick="abrirConfirmar({{ e.id }}, '{{ e.titulo|replace("'","\\'")|truncate(40) }}')"
+                    data-bs-toggle="modal" data-bs-target="#modalConfirmar">
+                <i class="bi bi-person-check me-1"></i>Confirmar
+            </button>
+            {% else %}<span class="text-muted small">—</span>{% endif %}
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="8" class="text-center text-muted py-4">
+            No hay eventos. <a href="/eventos/nuevo">Crear uno</a>.
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- ─── Modal confirmar asistencia ──────────────── -->
+<div class="modal fade" id="modalConfirmar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-check-fill text-success me-2"></i>Confirmar asistencia
+                    </h5>
+                    <p class="text-muted small mb-0" id="modalEvento"></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-3">
+
+                <!-- Estado inicial: seleccionar -->
+                <div id="estadoSeleccion">
+                    <label class="form-label fw-semibold">¿Quién confirma presencia?</label>
+                    <select id="selectLegislador" class="form-select mb-3">
+                        <option value="">— Seleccioná el legislador —</option>
+                        {% for l in legisladores %}
+                        <option value="{{ l.id }}">{{ l.apellido }}, {{ l.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-success w-100 fw-semibold" onclick="confirmarAsistencia()">
+                        <i class="bi bi-check2-circle me-1"></i>Confirmar presencia
+                    </button>
+                </div>
+
+                <!-- Estado: cargando -->
+                <div id="estadoCargando" class="text-center py-3 d-none">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="text-muted small mt-2">Guardando...</p>
+                </div>
+
+                <!-- Estado: éxito -->
+                <div id="estadoExito" class="text-center py-2 d-none">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
+                    <h5 class="mt-2 mb-1">¡Presencia confirmada!</h5>
+                    <p class="text-muted mb-3" id="nombreConfirmado"></p>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetModal()">
+                        Confirmar otro
+                    </button>
+                </div>
+
+                <!-- Estado: error -->
+                <div id="estadoError" class="d-none">
+                    <div class="alert alert-danger py-2 small" id="mensajeError"></div>
+                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetModal()">
+                        Reintentar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let eventoIdActual = null;
+
+function abrirConfirmar(id, titulo) {
+    eventoIdActual = id;
+    document.getElementById('modalEvento').textContent = titulo;
+    resetModal();
+}
+
+function resetModal() {
+    document.getElementById('estadoSeleccion').classList.remove('d-none');
+    document.getElementById('estadoCargando').classList.add('d-none');
+    document.getElementById('estadoExito').classList.add('d-none');
+    document.getElementById('estadoError').classList.add('d-none');
+    document.getElementById('selectLegislador').value = '';
+}
+
+function confirmarAsistencia() {
+    const legId = document.getElementById('selectLegislador').value;
+    if (!legId) {
+        document.getElementById('selectLegislador').classList.add('is-invalid');
+        return;
+    }
+    document.getElementById('selectLegislador').classList.remove('is-invalid');
+    document.getElementById('estadoSeleccion').classList.add('d-none');
+    document.getElementById('estadoCargando').classList.remove('d-none');
+
+    fetch('/api/eventos/' + eventoIdActual + '/confirmar', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ legislador_id: parseInt(legId) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('estadoCargando').classList.add('d-none');
+        if (data.ok) {
+            document.getElementById('nombreConfirmado').textContent = data.nombre;
+            document.getElementById('estadoExito').classList.remove('d-none');
+        } else {
+            document.getElementById('mensajeError').textContent = data.error || 'Error desconocido';
+            document.getElementById('estadoError').classList.remove('d-none');
+        }
+    })
+    .catch(() => {
+        document.getElementById('estadoCargando').classList.add('d-none');
+        document.getElementById('mensajeError').textContent = 'Error de conexión';
+        document.getElementById('estadoError').classList.remove('d-none');
+    });
+}
+
+function copiarLink(token, btn) {
+    const url = window.location.origin + '/confirmar/' + token;
+    navigator.clipboard.writeText(url).then(() => {
+        btn.innerHTML = '<i class="bi bi-check2"></i>';
+        btn.classList.replace('btn-outline-info', 'btn-success');
+        setTimeout(() => {
+            btn.innerHTML = '<i class="bi bi-link-45deg"></i>';
+            btn.classList.replace('btn-success', 'btn-outline-info');
+        }, 2000);
+    }).catch(() => { prompt('Copiá este link:', url); });
+}
+</script>
+{% endblock %}

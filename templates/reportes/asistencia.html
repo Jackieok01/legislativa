@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Asistencia{% endblock %}
+{% block content %}
+<h4 class="mb-4">Reporte de Asistencia</h4>
+{% if rows %}
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Legislador</th>
+            <th>Sector</th>
+            <th class="text-center text-success">Presencias</th>
+            <th class="text-center text-danger">Ausencias</th>
+            <th class="text-center text-warning">Justificados</th>
+            <th class="text-center">Total</th>
+            <th class="text-center">% Asistencia</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+        <td class="text-muted small align-middle">{{ loop.index }}</td>
+        <td class="align-middle"><a href="/legisladores/{{ r.id }}" class="fw-semibold text-decoration-none">{{ r.legislador }}</a></td>
+        <td class="align-middle"><span class="badge bg-secondary small">{{ r.sector or '—' }}</span></td>
+        <td class="text-center align-middle text-success fw-bold">{{ r.presencias }}</td>
+        <td class="text-center align-middle text-danger fw-bold">{{ r.ausencias }}</td>
+        <td class="text-center align-middle text-warning fw-bold">{{ r.justificados }}</td>
+        <td class="text-center align-middle text-muted">{{ r.total }}</td>
+        <td class="align-middle" style="min-width:130px">
+            <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:8px">
+                    <div class="progress-bar bg-{{ 'success' if r.pct >= 75 else 'warning' if r.pct >= 50 else 'danger' }}"
+                         style="width:{{ r.pct }}%"></div>
+                </div>
+                <span class="small fw-bold" style="min-width:42px">{{ r.pct }}%</span>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="alert alert-info">Sin datos de asistencia todavía. Cargá eventos y registrá asistencia primero.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Nueva Comisión{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/comisiones" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">Nueva Comisión</h4>
+</div>
+<div class="card p-4" style="max-width:400px">
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+        <input name="nombre" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Tipo</label>
+        <select name="tipo" class="form-select">
+            {% for t in ['Permanente','Especial','Bicameral'] %}
+            <option>{{ t }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary">Crear</button>
+        <a href="/comisiones" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+</div>
+{% endblock %}

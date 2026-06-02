@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ "Editar" if leg else "Nuevo" }} Legislador{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/legisladores" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">{{ "Editar" if leg else "Nuevo" }} Legislador</h4>
+</div>
+<div class="card p-4" style="max-width:560px">
+<form method="POST">
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+            <input name="nombre" class="form-control" value="{{ leg.nombre if leg else '' }}" required>
+        </div>
+        <div class="col-6">
+            <label class="form-label">Apellido <span class="text-danger">*</span></label>
+            <input name="apellido" class="form-control" value="{{ leg.apellido if leg else '' }}" required>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Sector</label>
+            <select name="sector" class="form-select">
+                <option value="">— Sin asignar —</option>
+                {% for s in ['Ala A','Ala B','Independiente'] %}
+                <option value="{{ s }}" {{ 'selected' if leg and leg.sector == s }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6">
+            <label class="form-label">Email</label>
+            <input name="email" type="email" class="form-control" value="{{ leg.email if leg else '' }}">
+        </div>
+        <div class="col-6">
+            <label class="form-label">Teléfono</label>
+            <input name="telefono" class="form-control" value="{{ leg.telefono if leg else '' }}">
+        </div>
+        <div class="col-12">
+            <label class="form-label">Notas internas</label>
+            <textarea name="notas" class="form-control" rows="3">{{ leg.notas if leg else '' }}</textarea>
+        </div>
+        {% if leg %}
+        <div class="col-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="activo" id="activo" {{ 'checked' if leg.activo }}>
+                <label class="form-check-label" for="activo">Legislador activo</label>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary">Guardar</button>
+        <a href="/legisladores" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+</div>
+{% endblock %}
