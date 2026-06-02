@@ -6,15 +6,24 @@ from db import get_db
 
 SCHEMA = """
     CREATE TABLE IF NOT EXISTS usuarios (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        username    TEXT    NOT NULL UNIQUE,
-        password    TEXT    NOT NULL DEFAULT '',
-        nombre      TEXT    NOT NULL,
-        email       TEXT,
-        google_id   TEXT    UNIQUE,
-        rol         TEXT    DEFAULT 'staff' CHECK(rol IN ('admin','presidente','staff')),
-        activo      INTEGER DEFAULT 1,
-        created_at  TEXT    DEFAULT (datetime('now'))
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        username        TEXT    NOT NULL UNIQUE,
+        password        TEXT    NOT NULL DEFAULT '',
+        nombre          TEXT    NOT NULL,
+        email           TEXT,
+        google_id       TEXT    UNIQUE,
+        rol             TEXT    DEFAULT 'asesor' CHECK(rol IN ('admin','presidente','legislador','asesor')),
+        legislador_id   INTEGER REFERENCES legisladores(id) ON DELETE SET NULL,
+        activo          INTEGER DEFAULT 1,
+        created_at      TEXT    DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS email_roles (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        email           TEXT    NOT NULL UNIQUE,
+        rol             TEXT    NOT NULL CHECK(rol IN ('admin','presidente','legislador','asesor')),
+        legislador_id   INTEGER REFERENCES legisladores(id) ON DELETE SET NULL,
+        created_at      TEXT    DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS legisladores (
@@ -116,6 +125,7 @@ SCHEMA = """
 MIGRATIONS = [
     "ALTER TABLE usuarios ADD COLUMN email TEXT",
     "ALTER TABLE usuarios ADD COLUMN google_id TEXT",
+    "ALTER TABLE usuarios ADD COLUMN legislador_id INTEGER REFERENCES legisladores(id) ON DELETE SET NULL",
 ]
 
 

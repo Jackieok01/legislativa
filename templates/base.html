@@ -17,7 +17,8 @@
         .table th { font-size: .82rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
         .badge-rol-presidente { background: #ffc107; color: #000; }
         .badge-rol-admin      { background: #dc3545; }
-        .badge-rol-staff      { background: #6c757d; }
+        .badge-rol-legislador { background: #0d6efd; }
+        .badge-rol-asesor     { background: #6c757d; }
     </style>
 </head>
 <body>
@@ -25,19 +26,30 @@
     <a class="navbar-brand" href="/"><i class="bi bi-building-fill-check me-2"></i>Gestión Legislativa</a>
     {% if current_user %}
     <div class="d-flex gap-2 align-items-center flex-wrap">
+
         {% if current_user.rol in ['presidente', 'admin'] %}
-        <a href="/dashboard" class="btn btn-warning btn-sm fw-semibold">
-            <i class="bi bi-speedometer2 me-1"></i>Dashboard
-        </a>
+            <a href="/dashboard"            class="btn btn-warning btn-sm fw-semibold"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+            <a href="/legisladores"         class="btn btn-outline-light btn-sm"><i class="bi bi-people me-1"></i>Legisladores</a>
+            <a href="/comisiones"           class="btn btn-outline-light btn-sm"><i class="bi bi-diagram-3 me-1"></i>Comisiones</a>
+            <a href="/eventos"              class="btn btn-outline-light btn-sm"><i class="bi bi-calendar-event me-1"></i>Eventos</a>
+            <a href="/proyectos"            class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Proyectos</a>
+            <a href="/reportes/asistencia"  class="btn btn-outline-warning btn-sm"><i class="bi bi-bar-chart me-1"></i>Reporte</a>
+            <a href="/admin/accesos"        class="btn btn-outline-danger btn-sm"><i class="bi bi-shield-lock me-1"></i>Accesos</a>
+
+        {% elif current_user.rol == 'legislador' %}
+            <a href="/mi-panel"             class="btn btn-outline-light btn-sm"><i class="bi bi-house me-1"></i>Mi Panel</a>
+            <a href="/eventos"              class="btn btn-outline-light btn-sm"><i class="bi bi-calendar-event me-1"></i>Eventos</a>
+            <a href="/proyectos"            class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Proyectos</a>
+            {% if current_user.legislador_id %}
+            <a href="/legisladores/{{ current_user.legislador_id }}" class="btn btn-outline-warning btn-sm"><i class="bi bi-person-circle me-1"></i>Mi Perfil</a>
+            {% endif %}
+
+        {% elif current_user.rol == 'asesor' %}
+            <a href="/mi-panel"             class="btn btn-outline-light btn-sm"><i class="bi bi-house me-1"></i>Mi Panel</a>
+            <a href="/proyectos"            class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Proyectos</a>
+            <a href="/eventos"              class="btn btn-outline-light btn-sm"><i class="bi bi-calendar-event me-1"></i>Eventos</a>
         {% endif %}
-        <a href="/legisladores"         class="btn btn-outline-light btn-sm"><i class="bi bi-people me-1"></i>Legisladores</a>
-        <a href="/comisiones"           class="btn btn-outline-light btn-sm"><i class="bi bi-diagram-3 me-1"></i>Comisiones</a>
-        <a href="/eventos"              class="btn btn-outline-light btn-sm"><i class="bi bi-calendar-event me-1"></i>Eventos</a>
-        <a href="/proyectos"            class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Proyectos</a>
-        <a href="/reportes/asistencia"  class="btn btn-outline-warning btn-sm"><i class="bi bi-bar-chart me-1"></i>Reporte</a>
-        {% if current_user.rol == 'admin' %}
-        <a href="/admin/usuarios" class="btn btn-outline-danger btn-sm"><i class="bi bi-shield-lock me-1"></i>Admin</a>
-        {% endif %}
+
         <div class="vr bg-secondary mx-1 d-none d-md-block"></div>
         <span class="text-light small d-none d-md-inline">{{ current_user.nombre }}</span>
         <span class="badge badge-rol-{{ current_user.rol }} small">{{ current_user.rol }}</span>

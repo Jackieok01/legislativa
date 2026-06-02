@@ -5,7 +5,16 @@
       "Bash(git push *)",
       "mcp__Claude_Preview__preview_start",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git commit -m 'Add migration for google_id and email columns on usuarios *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(git commit -m 'Add ProxyFix for HTTPS sessions and auto-init tables on startup *)",
+      "Bash(git commit -m 'Fix executescript to use autocommit per DDL statement *)",
+      "Bash(python setup_db.py)",
+      "Bash(python -c \"from app import app; print\\('app OK'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -m pip install authlib requests -q)"
     ]
   }
 }

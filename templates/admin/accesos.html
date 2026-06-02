@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Accesos{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Gestión de Accesos</h4>
+        <p class="text-muted small mb-0">Controlá quién puede ingresar al sistema y con qué rol</p>
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+        <i class="bi bi-plus-lg me-1"></i>Agregar acceso
+    </button>
+</div>
+
+<div class="card">
+    <table class="table table-sm mb-0 align-middle">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Legislador vinculado</th>
+                <th>Agregado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+        {% set badge = {'admin':'danger','presidente':'warning text-dark','legislador':'primary','asesor':'secondary'} %}
+        <tr>
+            <td>{{ r['email'] }}</td>
+            <td><span class="badge bg-{{ badge.get(r['rol'],'secondary') }}">{{ r['rol'] }}</span></td>
+            <td class="text-muted small">{{ r['leg_nombre'] or '—' }}</td>
+            <td class="text-muted small">{{ r['created_at'][:10] if r['created_at'] else '—' }}</td>
+            <td class="text-end">
+                <form method="POST" action="/admin/accesos/{{ r['id'] }}/delete"
+                      onsubmit="return confirm('Revocar acceso a {{ r['email'] }}?')">
+                    <button class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-3">No hay accesos configurados.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal nuevo acceso -->
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/admin/accesos/nuevo">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar acceso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email de Google</label>
+                        <input name="email" type="email" class="form-control" required
+                               placeholder="usuario@gmail.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rol</label>
+                        <select name="rol" class="form-select" required>
+                            <option value="asesor">Asesor</option>
+                            <option value="legislador">Legislador</option>
+                            <option value="presidente">Presidente de bloque</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Legislador vinculado <span class="text-muted fw-normal">(solo si el rol es Legislador o Presidente)</span></label>
+                        <select name="legislador_id" class="form-select">
+                            <option value="">— ninguno —</option>
+                            {% for l in legisladores %}
+                            <option value="{{ l['id'] }}">{{ l['apellido'] }}, {{ l['nombre'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

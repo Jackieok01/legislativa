@@ -60,9 +60,10 @@ def role_required(*roles):
 def inject_user():
     if session.get('user_id'):
         return {'current_user': {
-            'id':     session['user_id'],
-            'nombre': session['user_nombre'],
-            'rol':    session['user_rol'],
+            'id':           session['user_id'],
+            'nombre':       session['user_nombre'],
+            'rol':          session['user_rol'],
+            'legislador_id': session.get('user_legislador_id'),
         }}
     return {'current_user': None}
 
@@ -70,22 +71,10 @@ def inject_user():
 # LOGIN / LOGOUT
 # ─────────────────────────────────────────────
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET'])
 def login():
     if session.get('user_id'):
         return redirect(url_for('index'))
-    if request.method == 'POST':
-        db = get_db()
-        user = db.execute(
-            "SELECT * FROM usuarios WHERE username=? AND activo=1",
-            (request.form['username'].strip(),)
-        ).fetchone()
-        if user and check_password_hash(user['password'], request.form['password']):
-            session['user_id']     = user['id']
-            session['user_nombre'] = user['nombre']
-            session['user_rol']    = user['rol']
-            return redirect(url_for('index'))
-        flash('Usuario o contraseña incorrectos', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -114,55 +103,35 @@ def auth_google_callback():
     nombre    = user_info.get('name', email)
     google_id = user_info.get('sub')
 
-    db   = get_db()
-    user = db.execute(
-        "SELECT * FROM usuarios WHERE google_id=? AND activo=1", (google_id,)
-    ).fetchone()
+    db      = get_db()
+    er      = db.execute("SELECT * FROM email_roles WHERE email=?", (email,)).fetchone()
+    if not er:
+        flash(f'El mail {email} no tiene acceso al sistema. Contactá al administrador.', 'danger')
+        return redirect(url_for('login'))
 
+    rol          = er['rol']
+    legislador_id = er['legislador_id']
+
+    user = db.execute("SELECT * FROM usuarios WHERE google_id=? AND activo=1", (google_id,)).fetchone()
     if not user:
-        user = db.execute(
-            "SELECT * FROM usuarios WHERE email=? AND activo=1", (email,)
-        ).fetchone()
+        user = db.execute("SELECT * FROM usuarios WHERE email=? AND activo=1", (email,)).fetchone()
         if user:
-            db.execute("UPDATE usuarios SET google_id=? WHERE id=?", (google_id, user['id']))
+            db.execute("UPDATE usuarios SET google_id=?, rol=?, legislador_id=? WHERE id=?",
+                       (google_id, rol, legislador_id, user['id']))
             db.commit()
-
-    if not user:
-        # Auto-register as staff
-        db.execute(
-            "INSERT INTO usuarios (username, password, nombre, email, rol, google_id) VALUES (?,?,?,?,?,?)",
-            (email, '', nombre, email, 'staff', google_id)
-        )
-        db.commit()
-        user = db.execute("SELECT * FROM usuarios WHERE google_id=?", (google_id,)).fetchone()
-
-    session['user_id']     = user['id']
-    session['user_nombre'] = user['nombre']
-    session['user_rol']    = user['rol']
-    return redirect(url_for('index'))
-
-# ─────────────────────────────────────────────
-# RECUPERAR CONTRASEÑA
-# ─────────────────────────────────────────────
-
-@app.route('/recuperar', methods=['GET', 'POST'])
-def recuperar_password():
-    if session.get('user_id'):
-        return redirect(url_for('index'))
-    found = not_found = False
-    nombre = None
-    if request.method == 'POST':
-        db = get_db()
-        user = db.execute(
-            "SELECT nombre FROM usuarios WHERE username=? AND activo=1",
-            (request.form['username'].strip(),)
-        ).fetchone()
-        if user:
-            found  = True
-            nombre = user['nombre']
         else:
-            not_found = True
-    return render_template('recuperar.html', found=found, not_found=not_found, nombre=nombre)
+            db.execute(
+                "INSERT INTO usuarios (username, password, nombre, email, rol, google_id, legislador_id) VALUES (?,?,?,?,?,?,?)",
+                (email, '', nombre, email, rol, google_id, legislador_id)
+            )
+            db.commit()
+            user = db.execute("SELECT * FROM usuarios WHERE google_id=?", (google_id,)).fetchone()
+
+    session['user_id']          = user['id']
+    session['user_nombre']      = nombre
+    session['user_rol']         = rol
+    session['user_legislador_id'] = legislador_id
+    return redirect(url_for('index'))
 
 # ─────────────────────────────────────────────
 # ADMIN — USUARIOS
@@ -235,19 +204,10 @@ def admin_toggle_usuario(id):
 @app.route('/')
 @login_required
 def index():
-    db = get_db()
-    stats = {
-        'legisladores': db.execute("SELECT COUNT(*) FROM legisladores WHERE activo=1").fetchone()[0],
-        'eventos':      db.execute("SELECT COUNT(*) FROM eventos").fetchone()[0],
-        'proyectos':    db.execute("SELECT COUNT(*) FROM proyectos").fetchone()[0],
-        'comisiones':   db.execute("SELECT COUNT(*) FROM comisiones WHERE activa=1").fetchone()[0],
-    }
-    eventos_recientes = db.execute("""
-        SELECT e.*, c.nombre as comision_nombre
-        FROM eventos e LEFT JOIN comisiones c ON c.id = e.comision_id
-        ORDER BY e.fecha DESC LIMIT 5
-    """).fetchall()
-    return render_template('index.html', stats=stats, eventos=eventos_recientes)
+    rol = session.get('user_rol')
+    if rol in ('admin', 'presidente'):
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('mi_panel'))
 
 # ─────────────────────────────────────────────
 # DASHBOARD
@@ -324,6 +284,100 @@ def dashboard():
         proyectos_labels=json.dumps([r['estado'] for r in proyectos_rows]),
         proyectos_values=json.dumps([r['cnt'] for r in proyectos_rows]),
     )
+
+# ─────────────────────────────────────────────
+# MI PANEL (legislador / asesor)
+# ─────────────────────────────────────────────
+
+@app.route('/mi-panel')
+@login_required
+def mi_panel():
+    db  = get_db()
+    rol = session.get('user_rol')
+    leg_id = session.get('user_legislador_id')
+
+    proximos = db.execute("""
+        SELECT e.*, c.nombre as comision_nombre
+        FROM eventos e LEFT JOIN comisiones c ON c.id = e.comision_id
+        WHERE e.estado='Programado' AND e.fecha >= datetime('now')
+        ORDER BY e.fecha ASC LIMIT 8
+    """).fetchall()
+
+    proyectos = db.execute("""
+        SELECT p.*, c.nombre as comision_nombre
+        FROM proyectos p LEFT JOIN comisiones c ON c.id = p.comision_id
+        WHERE p.estado NOT IN ('Aprobado','Rechazado','Archivado')
+        ORDER BY CASE p.prioridad WHEN 'Alta' THEN 1 WHEN 'Media' THEN 2 ELSE 3 END, p.fecha_ingreso DESC
+        LIMIT 10
+    """).fetchall()
+
+    mi_asistencia = None
+    stats = None
+    if leg_id:
+        mi_asistencia = db.execute("""
+            SELECT e.titulo, e.fecha, e.tipo, a.estado
+            FROM asistencia a JOIN eventos e ON e.id = a.evento_id
+            WHERE a.legislador_id=? ORDER BY e.fecha DESC LIMIT 10
+        """, (leg_id,)).fetchall()
+        stats = db.execute("""
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN estado='Presente'    THEN 1 ELSE 0 END) as presentes,
+                   SUM(CASE WHEN estado='Ausente'     THEN 1 ELSE 0 END) as ausentes,
+                   SUM(CASE WHEN estado='Justificado' THEN 1 ELSE 0 END) as justificados,
+                   ROUND(SUM(CASE WHEN estado='Presente' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) as pct
+            FROM asistencia WHERE legislador_id=?
+        """, (leg_id,)).fetchone()
+
+    return render_template('mi_panel.html',
+        proximos=proximos, proyectos=proyectos,
+        mi_asistencia=mi_asistencia, stats=stats, leg_id=leg_id)
+
+# ─────────────────────────────────────────────
+# ADMIN — EMAIL ROLES
+# ─────────────────────────────────────────────
+
+@app.route('/admin/accesos')
+@login_required
+@role_required('admin', 'presidente')
+def admin_accesos():
+    db = get_db()
+    rows = db.execute("""
+        SELECT er.*, l.nombre || ' ' || l.apellido as leg_nombre
+        FROM email_roles er
+        LEFT JOIN legisladores l ON l.id = er.legislador_id
+        ORDER BY er.rol, er.email
+    """).fetchall()
+    legisladores = db.execute(
+        "SELECT id, nombre, apellido FROM legisladores WHERE activo=1 ORDER BY apellido"
+    ).fetchall()
+    return render_template('admin/accesos.html', rows=rows, legisladores=legisladores)
+
+@app.route('/admin/accesos/nuevo', methods=['POST'])
+@login_required
+@role_required('admin', 'presidente')
+def admin_acceso_nuevo():
+    db    = get_db()
+    email = request.form['email'].strip().lower()
+    rol   = request.form['rol']
+    leg_id = request.form.get('legislador_id') or None
+    if db.execute("SELECT id FROM email_roles WHERE email=?", (email,)).fetchone():
+        flash(f'{email} ya tiene acceso', 'warning')
+    else:
+        db.execute("INSERT INTO email_roles (email, rol, legislador_id) VALUES (?,?,?)",
+                   (email, rol, leg_id))
+        db.commit()
+        flash(f'Acceso otorgado a {email}', 'success')
+    return redirect(url_for('admin_accesos'))
+
+@app.route('/admin/accesos/<int:id>/delete', methods=['POST'])
+@login_required
+@role_required('admin', 'presidente')
+def admin_acceso_delete(id):
+    db = get_db()
+    db.execute("DELETE FROM email_roles WHERE id=?", (id,))
+    db.commit()
+    flash('Acceso revocado', 'success')
+    return redirect(url_for('admin_accesos'))
 
 # ─────────────────────────────────────────────
 # CONFIRMAR ASISTENCIA (PÚBLICO — sin auth)

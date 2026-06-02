@@ -10,16 +10,15 @@
         body { background: #1a1d23; min-height: 100vh; display:flex; align-items:center; }
         .btn-google {
             background: #fff; border: 1px solid #dadce0; color: #3c4043;
-            font-weight: 500; transition: box-shadow .2s;
+            font-weight: 500; font-size: 1rem; padding: .75rem 1.5rem;
+            transition: box-shadow .2s;
         }
-        .btn-google:hover { box-shadow: 0 1px 6px rgba(0,0,0,.2); background:#f8f9fa; }
-        .btn-google img { width:18px; margin-right:8px; }
-        .divider { display:flex; align-items:center; gap:10px; color:#6c757d; font-size:.85rem; }
-        .divider::before, .divider::after { content:''; flex:1; height:1px; background:#dee2e6; }
+        .btn-google:hover { box-shadow: 0 2px 8px rgba(0,0,0,.25); background:#f8f9fa; }
+        .btn-google img { width:20px; margin-right:10px; }
     </style>
 </head>
 <body>
-<div class="container" style="max-width:400px">
+<div class="container" style="max-width:420px">
     <div class="text-center mb-4">
         <i class="bi bi-building-fill-check text-warning fs-1"></i>
         <h4 class="text-white mt-2 mb-0">Gestión Legislativa</h4>
@@ -27,54 +26,25 @@
     </div>
 
     <div class="card shadow border-0">
-        <div class="card-body p-4">
-            <h5 class="mb-4">Iniciar sesión</h5>
+        <div class="card-body p-4 text-center">
+            <h5 class="mb-1">Iniciar sesión</h5>
+            <p class="text-muted small mb-4">Usá tu cuenta institucional de Google</p>
 
             {% with msgs = get_flashed_messages(with_categories=true) %}
                 {% if msgs %}{% for cat, m in msgs %}
-                <div class="alert alert-{{ cat }} py-2">{{ m }}</div>
+                <div class="alert alert-{{ cat }} py-2 text-start">{{ m }}</div>
                 {% endfor %}{% endif %}
             {% endwith %}
 
-            <a href="/login/google" class="btn btn-google w-100 d-flex align-items-center justify-content-center mb-3">
+            <a href="/login/google" class="btn btn-google w-100 d-flex align-items-center justify-content-center">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
                 Continuar con Google
             </a>
-
-            <div class="divider mb-3">o ingresá con usuario</div>
-
-            <form method="POST" autocomplete="on">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Usuario</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input name="username" class="form-control" placeholder="usuario"
-                               autocomplete="username" autofocus>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input name="password" type="password" class="form-control"
-                               placeholder="••••••••" autocomplete="current-password">
-                    </div>
-                </div>
-                <button class="btn btn-primary w-100 fw-semibold">
-                    <i class="bi bi-box-arrow-in-right me-1"></i>Ingresar
-                </button>
-            </form>
-
-            <div class="text-center mt-3">
-                <a href="/recuperar" class="text-muted small">
-                    <i class="bi bi-key me-1"></i>¿Olvidaste tu contraseña?
-                </a>
-            </div>
         </div>
     </div>
 
     <p class="text-center text-secondary small mt-3">
-        Acceso restringido al personal autorizado
+        <i class="bi bi-shield-lock me-1"></i>Acceso restringido al personal autorizado
     </p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

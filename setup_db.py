@@ -18,15 +18,24 @@ def setup():
 
     db.executescript("""
         CREATE TABLE IF NOT EXISTS usuarios (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            username    TEXT    NOT NULL UNIQUE,
-            password    TEXT    NOT NULL DEFAULT '',
-            nombre      TEXT    NOT NULL,
-            email       TEXT,
-            google_id   TEXT    UNIQUE,
-            rol         TEXT    DEFAULT 'staff' CHECK(rol IN ('admin','presidente','staff')),
-            activo      INTEGER DEFAULT 1,
-            created_at  TEXT    DEFAULT (datetime('now'))
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            username        TEXT    NOT NULL UNIQUE,
+            password        TEXT    NOT NULL DEFAULT '',
+            nombre          TEXT    NOT NULL,
+            email           TEXT,
+            google_id       TEXT    UNIQUE,
+            rol             TEXT    DEFAULT 'asesor' CHECK(rol IN ('admin','presidente','legislador','asesor')),
+            legislador_id   INTEGER REFERENCES legisladores(id) ON DELETE SET NULL,
+            activo          INTEGER DEFAULT 1,
+            created_at      TEXT    DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS email_roles (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            email           TEXT    NOT NULL UNIQUE,
+            rol             TEXT    NOT NULL CHECK(rol IN ('admin','presidente','legislador','asesor')),
+            legislador_id   INTEGER REFERENCES legisladores(id) ON DELETE SET NULL,
+            created_at      TEXT    DEFAULT (datetime('now'))
         );
 
         CREATE TABLE IF NOT EXISTS legisladores (
@@ -124,16 +133,11 @@ def setup():
         CREATE INDEX IF NOT EXISTS idx_proyectos_estado      ON proyectos(estado);
     """)
 
-    # ── Usuarios ────────────────────────────────────────────
-    for username, password, nombre, rol in [
-        ('admin',       'admin123',   'Administrador del Sistema', 'admin'),
-        ('presidente',  'bloque2026', 'María García',              'presidente'),
-        ('staff',       'staff123',   'Equipo Administrativo',     'staff'),
-    ]:
-        db.execute(
-            "INSERT INTO usuarios (username, password, nombre, rol) VALUES (?,?,?,?)",
-            (username, generate_password_hash(password), nombre, rol)
-        )
+    # ── Usuarios (admin only, rest login via Google) ─────────
+    db.execute(
+        "INSERT INTO usuarios (username, password, nombre, email, rol) VALUES (?,?,?,?,?)",
+        ('admin', generate_password_hash('admin123'), 'Administrador del Sistema', 'admin@legislatura.gov.ar', 'admin')
+    )
 
     # ── Legisladores ────────────────────────────────────────
     legs = [
@@ -158,6 +162,28 @@ def setup():
             INSERT INTO legisladores (nombre, apellido, sector, email, fecha_inicio, activo)
             VALUES (?,?,?,?,'2023-12-10',1)
         """, (nombre, apellido, sector, email))
+
+    # ── Email roles ──────────────────────────────────────────
+    for email, rol, leg_id in [
+        ('admin@legislatura.gov.ar',        'admin',      None),
+        ('mgarcia@legislatura.gov.ar',      'presidente', 1),
+        ('crodriguez@legislatura.gov.ar',   'legislador', 2),
+        ('agonzalez@legislatura.gov.ar',    'legislador', 3),
+        ('jmartinez@legislatura.gov.ar',    'legislador', 4),
+        ('lsanchez@legislatura.gov.ar',     'legislador', 5),
+        ('rperez@legislatura.gov.ar',       'legislador', 6),
+        ('vlopez@legislatura.gov.ar',       'legislador', 7),
+        ('hdiaz@legislatura.gov.ar',        'legislador', 8),
+        ('ctorres@legislatura.gov.ar',      'legislador', 9),
+        ('mramirez@legislatura.gov.ar',     'legislador', 10),
+        ('pflores@legislatura.gov.ar',      'legislador', 11),
+        ('dherrera@legislatura.gov.ar',     'legislador', 12),
+        ('smorales@legislatura.gov.ar',     'legislador', 13),
+        ('fcastro@legislatura.gov.ar',      'legislador', 14),
+        ('gortiz@legislatura.gov.ar',       'legislador', 15),
+    ]:
+        db.execute("INSERT INTO email_roles (email, rol, legislador_id) VALUES (?,?,?)",
+                   (email, rol, leg_id))
 
     # ── Comisiones ──────────────────────────────────────────
     for nombre, tipo in [
