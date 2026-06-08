@@ -14,7 +14,28 @@
       "Bash(python setup_db.py)",
       "Bash(python -c \"from app import app; print\\('app OK'\\)\")",
       "Bash(pip install *)",
-      "Bash(python -m pip install authlib requests -q)"
+      "Bash(python -m pip install authlib requests -q)",
+      "Bash(git commit -m 'Seed ocampojacqueline83@gmail.com as admin in email_roles *)",
+      "Bash(git commit -m 'Fix aborted transaction state in PostgreSQL migrations and seeds *)",
+      "mcp__n8n__search_nodes",
+      "mcp__n8n__list_credentials",
+      "mcp__n8n__get_node_types",
+      "mcp__n8n__validate_workflow",
+      "mcp__n8n__create_workflow_from_code",
+      "mcp__n8n__update_workflow",
+      "WebFetch(domain:innovacionconinclusion.com)",
+      "mcp__n8n__search_executions",
+      "mcp__n8n__get_execution",
+      "Bash(python3 -c ' *)",
+      "mcp__n8n__get_workflow_details",
+      "mcp__n8n__publish_workflow",
+      "WebFetch(domain:jackiee-oca.app.n8n.cloud)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__navigate",
+      "WebFetch(domain:portalfici.vercel.app)",
+      "mcp__n8n__get_sdk_reference",
+      "WebFetch(domain:datos-a-mano.vercel.app)",
+      "WebFetch(domain:www.rava.com)"
     ]
   }
 }
